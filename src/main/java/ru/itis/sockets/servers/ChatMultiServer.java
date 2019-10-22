@@ -1,7 +1,10 @@
 package ru.itis.sockets.servers;
 
+import ru.itis.sockets.dao.MessageDao;
+import ru.itis.sockets.dao.MessageDaoImpl;
 import ru.itis.sockets.dao.UserDao;
 import ru.itis.sockets.dao.UserDaoImpl;
+import ru.itis.sockets.model.Message;
 import ru.itis.sockets.model.User;
 
 import java.io.BufferedReader;
@@ -11,6 +14,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.DriverManager;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -50,6 +54,7 @@ public class ChatMultiServer {
         private Socket clientSocket;
         private BufferedReader in;
         private UserDao userDao;
+        private MessageDao messageDao;
         private User user;
         ClientHandler(Socket socket) {
             this.clientSocket = socket;
@@ -61,6 +66,7 @@ public class ChatMultiServer {
             try {
                 Thread thread = Thread.currentThread();
                 this.userDao = new UserDaoImpl(DriverManager.getConnection(properties[0],properties[1],properties[2]));
+                this.messageDao = new MessageDaoImpl(DriverManager.getConnection(properties[0],properties[1],properties[2]));
                 // получем входной поток для конкретного клиента
                 in = new BufferedReader(
                 new InputStreamReader(clientSocket.getInputStream()));
@@ -68,28 +74,34 @@ public class ChatMultiServer {
                 String inputLine;
                 checkAuth();
                 while ((inputLine = in.readLine()) != null) {
+                    messageDao.save(new Message(inputLine, LocalDateTime.now(),this.user.getId()));
+                    String resultLine = "" + this.user.getUserName() + " on " +
+                            LocalDateTime.now() + " : ";
                     if (".".equals(inputLine)) {
                         // бегаем по всем клиентам и обовещаем их о событии
-                        for (ClientHandler client : clients) {
-                            PrintWriter out = new PrintWriter(client.clientSocket.getOutputStream(), true);
-                            out.println("bye");
-                        }
+                        resultLine += "Bye";
+                        notifyClients(resultLine);
                         this.clientSocket.close();
                         clients.remove(this);
                         in.close();
                         this.stop();
                         break;
                     } else {
-                        for (ClientHandler client : clients) {
-                            PrintWriter out = new PrintWriter(client.clientSocket.getOutputStream(), true);
-                            out.println(inputLine);
-                        }
+                        resultLine += inputLine;
+                        notifyClients(resultLine);
                     }
                 }
 //                in.close();
 //                clientSocket.close();
             } catch (Exception e) {
                 throw new IllegalStateException(e);
+            }
+        }
+
+        private void notifyClients(String inputLine) throws IOException {
+            for (ClientHandler client : clients) {
+                PrintWriter out = new PrintWriter(client.clientSocket.getOutputStream(), true);
+                out.println(inputLine);
             }
         }
 
