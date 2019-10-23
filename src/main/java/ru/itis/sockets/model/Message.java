@@ -7,6 +7,7 @@ public class Message {
     private String text;
     private LocalDateTime dateTime;
     private Long ownerId;
+    private Long receiverId;
 
     public Message(String text, LocalDateTime dateTime, Long ownerId) {
         this.text = text;
@@ -14,11 +15,19 @@ public class Message {
         this.ownerId = ownerId;
     }
 
-    public Message(Long id, String text, LocalDateTime dateTime, Long ownerId) {
+    public Message(String text, LocalDateTime dateTime, Long ownerId, Long receiverId) {
+        this.text = text;
+        this.dateTime = dateTime;
+        this.ownerId = ownerId;
+        this.receiverId = receiverId;
+    }
+
+    public Message(Long id, String text, LocalDateTime dateTime, Long ownerId, Long receiverId) {
         this.id = id;
         this.text = text;
         this.dateTime = dateTime;
         this.ownerId = ownerId;
+        this.receiverId = receiverId;
     }
 
     public Long getId() {
@@ -51,5 +60,13 @@ public class Message {
 
     public void setOwnerId(Long ownerId) {
         this.ownerId = ownerId;
+    }
+
+    public Long getReceiverId() {
+        return receiverId;
+    }
+
+    public void setReceiverId(Long receiverId) {
+        this.receiverId = receiverId;
     }
 }

@@ -20,9 +20,23 @@ public class UserDaoImpl implements UserDao {
         this.connection = connection;
     }
 
+
     @Override
-    public Optional<User> find(Integer id) {
-        return Optional.empty();
+    public Optional<User> find(Long id) {
+        User user = null;
+        try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM users WHERE id = ?")){
+            statement.setLong(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            //Если соответстующая строка найдена,обрабатываем её c помощью userRowMapper.
+            //Соответствунно получаем объект User.
+            if (resultSet.next()) {
+                user = userFindRowMapper.mapRow(resultSet);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.ofNullable(user);
     }
 
     @Override
@@ -66,7 +80,7 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(Long id) {
 
     }
 
